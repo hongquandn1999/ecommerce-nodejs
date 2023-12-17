@@ -7,8 +7,8 @@ const compression = require('compression');
 require('dotenv').config();
 // db
 require('./db/init.mongodb');
-const { countConnect } = require('./helpers/check.connect');
-countConnect();
+const { checkOverloadConnect } = require('./helpers/check.connect');
+checkOverloadConnect();
 // middleware
 app.use(morgan('dev'));
 app.use(helmet());
