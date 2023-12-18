@@ -1,9 +1,11 @@
+const AccessService = require('../services/Access.service');
+
 class AccessController {
   signup = async (req, res, next) => {
     try {
-      console.log(`:::singup::: ${req.body}`);
+      console.log(`:::singup::: ${JSON.stringify(req.body)}`);
 
-      return res.status(200).json({ code: '20001', metadata: 'signup Kiara' });
+      return res.status(200).json(await AccessService.signup(req.body));
     } catch (error) {}
   };
 }
