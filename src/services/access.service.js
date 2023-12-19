@@ -45,6 +45,7 @@ class AccessService {
         const publicKeyString = await KeyTokenService.createKeyToken({
           userId: newShop._id,
           publicKey,
+          privateKey,
         });
 
         if (!publicKeyString) {
