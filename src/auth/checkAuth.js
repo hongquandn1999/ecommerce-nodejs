@@ -26,4 +26,6 @@ const apiKey = async (req, res, next) => {
   } catch (error) {}
 };
 
-module.exports = { apiKey };
+const asyncHandler = (fn) => (req, res, next) => fn(req, res, next).catch(next);
+
+module.exports = { apiKey, asyncHandler };
