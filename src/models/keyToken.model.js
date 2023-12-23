@@ -10,7 +10,8 @@ const keyTokenSchema = new Schema(
     user: { type: Schema.Types.ObjectId, require: true, ref: 'Shop' },
     publicKey: { type: String, require: true },
     privateKey: { type: String, require: true },
-    refreshToken: { type: Array, default: [] },
+    refreshTokensUsed: { type: Array, default: [] }, // store the refresh tokens used for the jwt
+    refreshToken: { type: String, require: true },
   },
   { timestamps: true, collection: COLLECTION_NAME }
 );

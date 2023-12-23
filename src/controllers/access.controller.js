@@ -1,12 +1,20 @@
+const { ForbiddenError } = require('../core/error.response');
+const { Created, SuccessResponse } = require('../core/success.response');
 const AccessService = require('../services/Access.service');
 
 class AccessController {
-  signup = async (req, res, next) => {
-    try {
-      console.log(`:::singup::: ${JSON.stringify(req.body)}`);
+  login = async (req, res, next) => {
+    new SuccessResponse({
+      message: 'Login OK!',
+      metadata: await AccessService.login(req.body),
+    }).send(res);
+  };
 
-      return res.status(200).json(await AccessService.signup(req.body));
-    } catch (error) {}
+  signup = async (req, res, next) => {
+    new Created({
+      message: 'Registered OK!',
+      metadata: await AccessService.signup(req.body),
+    }).send(res);
   };
 }
 

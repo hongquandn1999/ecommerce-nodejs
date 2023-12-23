@@ -11,9 +11,57 @@ const {
   BadRequestError,
   ForbiddenError,
   InternalServerError,
+  AuthFailureError,
 } = require('../core/error.response');
+const { findByEmail } = require('./shop.service');
 
 class AccessService {
+  /*
+    1. Check email exist
+    2. Compare password
+    3. Create token pair
+    4. Return token pair
+
+  */
+  static login = async ({ email, password, refreshToken = null }) => {
+    const foundShop = await findByEmail(email);
+    if (!foundShop) {
+      throw new BadRequestError('Error: Shop not found');
+    }
+
+    const isMatch = await bcrypt.compare(password, foundShop.password);
+    if (!isMatch) {
+      throw new AuthFailureError('Authentication Error');
+    }
+    // created privateKey: sign token, publicKey: verify token
+
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 4096,
+      publicKeyEncoding: {
+        type: 'pkcs1',
+        format: 'pem',
+      },
+      privateKeyEncoding: {
+        type: 'pkcs1',
+        format: 'pem',
+      },
+    });
+    // generate key token
+    const tokens = await createTokenPair(
+      { userId: foundShop._id, email },
+      publicKey,
+      privateKey
+    );
+
+    return {
+      shop: getInfoData({
+        fields: ['_id', 'name', 'email'],
+        data: foundShop,
+      }),
+      tokens,
+    };
+  };
+
   static signup = async ({ name, email, password }) => {
     try {
       const holderShop = await shopModel.findOne({ email }).lean();
@@ -42,25 +90,23 @@ class AccessService {
             format: 'pem',
           },
         });
-
-        const publicKeyString = await KeyTokenService.createKeyToken({
-          userId: newShop._id,
+        const tokenPair = await createTokenPair(
+          { userId: newShop._id, email },
+          publicKey,
+          privateKey
+        );
+        const keyStore = await KeyTokenService.createKeyToken({
+          refreshToken: tokenPair.refreshToken,
+          userId: { _id: newShop._id, email },
           publicKey,
           privateKey,
         });
 
-        if (!publicKeyString) {
+        if (!keyStore) {
           throw new ForbiddenError('Error: Create key token failed');
         }
 
-        const publicKeyObject = crypto.createPublicKey(publicKeyString);
-
         // create token pair
-        const tokenPair = await createTokenPair(
-          { userId: newShop._id, email },
-          publicKeyObject,
-          privateKey
-        );
 
         return {
           code: 201,
