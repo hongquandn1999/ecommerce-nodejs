@@ -20,6 +20,85 @@ class AccessService {
    * check this token already used
    */
 
+  static handleRefreshTokenV2 = async ({ refreshToken, user, keyStore }) => {
+    const { userId, email } = user;
+
+    if (keyStore.refreshTokensUsed.includes(refreshToken)) {
+      await KeyTokenService.deleteKeyById(userId);
+      throw new ForbiddenError(
+        'Something wrong happened !! Please login again'
+      );
+    }
+
+    if (keyStore.refreshToken !== refreshToken) {
+      throw new AuthFailureError('Shop not registered');
+    }
+
+    const foundShop = await findByEmail(email);
+
+    if (!foundShop) {
+      throw new AuthFailureError('Error: Shop not found');
+    }
+
+    // create new token pair
+    const tokens = await createTokenPair(
+      { userId, email },
+      keyStore.publicKey,
+      keyStore.privateKey
+    );
+
+    // update key token
+    await keyStore.updateOne({
+      $set: {
+        refreshToken: tokens.refreshToken,
+      },
+      $addToSet: {
+        refreshTokensUsed: refreshToken,
+      },
+    });
+
+    return {
+      user,
+      tokens,
+    };
+
+    // check this token already used
+    // const foundToken = await KeyTokenService.findByRefreshTokenUsed(
+    //   refreshToken
+    // );
+    // if (foundToken) {
+    //   // check token expired
+    //   const { userId, email } = await verifyToken(
+    //     refreshToken,
+    //     foundToken.privateKey
+    //   );
+
+    //   console.log('userId', userId);
+    //   console.log('email', email);
+    //   // remove key token
+    //   await KeyTokenService.removeKeyById(foundToken._id);
+    //   throw new ForbiddenError(
+    //     'Something wrong happened !! Please login again'
+    //   );
+    // }
+
+    // const holderToken = await KeyTokenService.findByRefreshToken(refreshToken);
+
+    // if (!holderToken) {
+    //   throw new AuthFailureError('Shop not registered');
+    // }
+
+    // // verify token
+    // const { userId, email } = await verifyToken(
+    //   refreshToken,
+    //   holderToken.privateKey
+    // );
+
+    // console.log('::2::', { userId, email });
+
+    // const foundShop = await findByEmail(email);
+  };
+
   static handleRefreshToken = async (refreshToken) => {
     // check this token already used
     const foundToken = await KeyTokenService.findByRefreshTokenUsed(

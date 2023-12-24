@@ -30,6 +30,7 @@ app.use((err, req, res, next) => {
     status: 'error',
     code: err.status || 500,
     message: err.message || 'Internal Server Error',
+    stack: err.stack || null,
   });
 });
 module.exports = app;
