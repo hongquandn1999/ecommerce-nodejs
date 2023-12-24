@@ -80,4 +80,8 @@ const authentication = asyncHandler(async (req, res, next) => {
   }
 });
 
-module.exports = { createTokenPair, authentication };
+const verifyToken = async (token, keySecret) => {
+  return await jwt.verify(token, keySecret);
+};
+
+module.exports = { createTokenPair, authentication, verifyToken };

@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const KeyTokenService = require('./keyToken.service');
 const { RoleShop } = require('../constants');
-const { createTokenPair } = require('../auth/authUtil');
+const { createTokenPair, verifyToken } = require('../auth/authUtil');
 const { getInfoData } = require('../utils');
 const {
   BadRequestError,
@@ -16,6 +16,73 @@ const {
 const { findByEmail } = require('./shop.service');
 
 class AccessService {
+  /**
+   * check this token already used
+   */
+
+  static handleRefreshToken = async (refreshToken) => {
+    // check this token already used
+    const foundToken = await KeyTokenService.findByRefreshTokenUsed(
+      refreshToken
+    );
+    if (foundToken) {
+      // check token expired
+      const { userId, email } = await verifyToken(
+        refreshToken,
+        foundToken.privateKey
+      );
+
+      console.log('userId', userId);
+      console.log('email', email);
+      // remove key token
+      await KeyTokenService.removeKeyById(foundToken._id);
+      throw new ForbiddenError(
+        'Something wrong happened !! Please login again'
+      );
+    }
+
+    const holderToken = await KeyTokenService.findByRefreshToken(refreshToken);
+
+    if (!holderToken) {
+      throw new AuthFailureError('Shop not registered');
+    }
+
+    // verify token
+    const { userId, email } = await verifyToken(
+      refreshToken,
+      holderToken.privateKey
+    );
+
+    console.log('::2::', { userId, email });
+
+    const foundShop = await findByEmail(email);
+
+    if (!foundShop) {
+      throw new AuthFailureError('Error: Shop not found');
+    }
+
+    // create new token pair
+    const tokens = await createTokenPair(
+      { userId, email },
+      holderToken.publicKey,
+      holderToken.privateKey
+    );
+
+    // update key token
+    await holderToken.updateOne({
+      $set: {
+        refreshToken: tokens.refreshToken,
+      },
+      $addToSet: {
+        refreshTokensUsed: refreshToken,
+      },
+    });
+
+    return {
+      user: { userId, email },
+      tokens,
+    };
+  };
   /*
     1. Check email exist
     2. Compare password
