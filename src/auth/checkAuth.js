@@ -10,7 +10,6 @@ const HEADER = {
 const apiKey = async (req, res, next) => {
   try {
     const key = req.headers[HEADER.API_KEY]?.toString();
-    console.log(key);
     if (!key) {
       return res.status(403).json({ message: 'Forbidden Error' });
     }
@@ -26,6 +25,4 @@ const apiKey = async (req, res, next) => {
   } catch (error) {}
 };
 
-const asyncHandler = (fn) => (req, res, next) => fn(req, res, next).catch(next);
-
-module.exports = { apiKey, asyncHandler };
+module.exports = { apiKey };

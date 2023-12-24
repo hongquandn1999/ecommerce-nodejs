@@ -47,11 +47,19 @@ class AccessService {
       },
     });
     // generate key token
+    const { _id: userId } = foundShop;
     const tokens = await createTokenPair(
-      { userId: foundShop._id, email },
+      { userId, email },
       publicKey,
       privateKey
     );
+
+    await KeyTokenService.createKeyToken({
+      refreshToken: tokens.refreshToken,
+      userId,
+      publicKey,
+      privateKey,
+    });
 
     return {
       shop: getInfoData({
@@ -127,6 +135,14 @@ class AccessService {
     } catch (error) {
       throw new InternalServerError(error.message);
     }
+  };
+
+  static logout = async (keyStore) => {
+    const deleteKey = await KeyTokenService.removeKeyById(keyStore._id);
+    if (!deleteKey) {
+      throw new ForbiddenError('Error: Delete key token failed');
+    }
+    return deleteKey;
   };
 }
 
