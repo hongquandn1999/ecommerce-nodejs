@@ -1,6 +1,6 @@
 'use strict';
 const mongoose = require('mongoose');
-const connectionString = `mongodb+srv://${process.env.MONGO_USER_NAME}:${process.env.MONGO_USER_PASSWORD}@cluster0.v2jtx.mongodb.net/?retryWrites=true&w=majority`;
+const connectionString = `mongodb+srv://${process.env.MONGO_USER_NAME}:${process.env.MONGO_USER_PASSWORD}@cluster0.kg2ff.mongodb.net/?retryWrites=true&w=majority`;
 class Database {
   constructor() {
     this.connect();
